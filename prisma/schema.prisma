@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  VIEWER
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+enum NormalBalance {
+  DEBIT
+  CREDIT
+}
+
+enum ContactType {
+  CUSTOMER
+  VENDOR
+}
+
+enum JournalLineType {
+  DEBIT
+  CREDIT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum BillStatus {
+  DRAFT
+  AWAITING_PAYMENT
+  PAID
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String?  @map("password_hash")
+  companyId    String   @map("company_id")
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("users")
+}
+
+model Company {
+  id              String           @id @default(cuid())
+  legalName       String           @map("legal_name")
+  fiscalYearStart DateTime         @map("fiscal_year_start")
+  industry        String?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  users           User[]
+  accounts        Account[]
+  journalEntries  JournalEntry[]
+  contacts        Contact[]
+  productServices ProductService[]
+  invoices        Invoice[]
+  bills           Bill[]
+
+  @@map("companies")
+}
+
+model Account {
+  id            String             @id @default(cuid())
+  companyId     String             @map("company_id")
+  code          String
+  name          String
+  type          AccountType
+  normalBalance NormalBalance      @map("normal_balance")
+  isActive      Boolean            @default(true) @map("is_active")
+  description   String?
+  company       Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  journalLines  JournalEntryLine[]
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("accounts")
+}
+
+model JournalEntry {
+  id           String             @id @default(cuid())
+  companyId    String             @map("company_id")
+  date         DateTime
+  reference    String?
+  description  String?
+  isReconciled Boolean            @default(false) @map("is_reconciled")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  company      Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lines        JournalEntryLine[]
+  invoice      Invoice?
+  bill         Bill?
+
+  @@index([companyId, date])
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id             String          @id @default(cuid())
+  journalEntryId String          @map("journal_entry_id")
+  accountId      String          @map("account_id")
+  amount         Decimal         @db.Decimal(15, 2)
+  type           JournalLineType
+  journalEntry   JournalEntry    @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account        Account         @relation(fields: [accountId], references: [id])
+
+  @@index([journalEntryId])
+  @@index([accountId])
+  @@map("journal_entry_lines")
+}
+
+model Contact {
+  id             String      @id @default(cuid())
+  companyId      String      @map("company_id")
+  type           ContactType
+  displayName    String      @map("display_name")
+  email          String?
+  phone          String?
+  billingAddress String?     @map("billing_address")
+  openingBalance Decimal     @default(0) @map("opening_balance") @db.Decimal(15, 2)
+  company        Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices       Invoice[]
+  bills          Bill[]
+
+  @@index([companyId])
+  @@map("contacts")
+}
+
+model ProductService {
+  id           String            @id @default(cuid())
+  companyId    String            @map("company_id")
+  name         String
+  unitPrice    Decimal           @default(0) @map("unit_price") @db.Decimal(15, 2)
+  taxable      Boolean           @default(false)
+  company      Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoiceLines InvoiceLineItem[]
+  billLines    BillLineItem[]
+
+  @@index([companyId])
+  @@map("product_services")
+}
+
+model Invoice {
+  id             String            @id @default(cuid())
+  companyId      String            @map("company_id")
+  invoiceNumber  String            @map("invoice_number")
+  contactId      String            @map("contact_id")
+  issueDate      DateTime          @map("issue_date")
+  dueDate        DateTime          @map("due_date")
+  status         InvoiceStatus     @default(DRAFT)
+  subtotal       Decimal           @default(0) @db.Decimal(15, 2)
+  tax            Decimal           @default(0) @db.Decimal(15, 2)
+  totalAmount    Decimal           @default(0) @map("total_amount") @db.Decimal(15, 2)
+  memo           String?
+  journalEntryId String?           @unique @map("journal_entry_id")
+  company        Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact        Contact           @relation(fields: [contactId], references: [id])
+  journalEntry   JournalEntry?     @relation(fields: [journalEntryId], references: [id])
+  lineItems      InvoiceLineItem[]
+
+  @@unique([companyId, invoiceNumber])
+  @@index([companyId, issueDate])
+  @@index([companyId, status])
+  @@map("invoices")
+}
+
+model InvoiceLineItem {
+  id               String          @id @default(cuid())
+  invoiceId        String          @map("invoice_id")
+  productServiceId String?         @map("product_service_id")
+  description      String?
+  quantity         Decimal         @default(1) @db.Decimal(15, 2)
+  unitPrice        Decimal         @default(0) @map("unit_price") @db.Decimal(15, 2)
+  total            Decimal         @default(0) @db.Decimal(15, 2)
+  invoice          Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productService   ProductService? @relation(fields: [productServiceId], references: [id])
+
+  @@index([invoiceId])
+  @@map("invoice_line_items")
+}
+
+model Bill {
+  id             String         @id @default(cuid())
+  companyId      String         @map("company_id")
+  billNumber     String         @map("bill_number")
+  contactId      String         @map("contact_id")
+  billDate       DateTime       @map("bill_date")
+  dueDate        DateTime       @map("due_date")
+  status         BillStatus     @default(DRAFT)
+  totalAmount    Decimal        @default(0) @map("total_amount") @db.Decimal(15, 2)
+  journalEntryId String?        @unique @map("journal_entry_id")
+  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact        Contact        @relation(fields: [contactId], references: [id])
+  journalEntry   JournalEntry?  @relation(fields: [journalEntryId], references: [id])
+  lineItems      BillLineItem[]
+
+  @@unique([companyId, billNumber])
+  @@index([companyId, billDate])
+  @@map("bills")
+}
+
+model BillLineItem {
+  id               String          @id @default(cuid())
+  billId           String          @map("bill_id")
+  productServiceId String?         @map("product_service_id")
+  description      String?
+  quantity         Decimal         @default(1) @db.Decimal(15, 2)
+  unitPrice        Decimal         @default(0) @map("unit_price") @db.Decimal(15, 2)
+  total            Decimal         @default(0) @db.Decimal(15, 2)
+  bill             Bill            @relation(fields: [billId], references: [id], onDelete: Cascade)
+  productService   ProductService? @relation(fields: [productServiceId], references: [id])
+
+  @@index([billId])
+  @@map("bill_line_items")
+}
