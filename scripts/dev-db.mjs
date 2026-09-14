@@ -6,8 +6,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const localAppData = process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local");
 const dataDir =
-  process.env.PGDATA ?? path.join(os.tmpdir(), "opencode", "accounting-pg", "data");
+  process.env.PGDATA ?? path.join(localAppData, "accounting-app", "pgdata");
 const port = Number(process.env.PGPORT ?? 5432);
 const user = "postgres";
 const password = "postgres";
