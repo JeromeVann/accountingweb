@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { moneyToNumber } from "@/lib/accounting/money";
@@ -15,6 +16,7 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
 
   const companyId = session.user.companyId;
+  const t = await getTranslations("dashboard");
 
   const company = await prisma.company.findUnique({
     where: { id: companyId },
@@ -43,9 +45,9 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Welcome back, {session.user.name}.
+          {t("welcome", { name: session.user.name ?? "" })}
         </p>
       </div>
 

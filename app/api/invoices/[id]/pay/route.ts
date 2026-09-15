@@ -50,6 +50,7 @@ export async function PUT(
         reference: invoice.invoiceNumber,
         description: `Payment for ${invoice.invoiceNumber}`,
         amount: invoice.totalAmount,
+        withholdingTax: invoice.withholdingTaxAmount,
       });
 
       return tx.invoice.update({

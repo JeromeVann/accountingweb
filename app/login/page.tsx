@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
 import {
   Card,
@@ -11,7 +12,9 @@ import {
 
 export const metadata: Metadata = { title: "Sign in" };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const t = await getTranslations("auth");
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
       <div className="w-full max-w-sm">
@@ -21,17 +24,17 @@ export default function LoginPage() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Sign in</CardTitle>
-            <CardDescription>Enter your email and password to continue.</CardDescription>
+            <CardTitle className="text-lg">{t("signIn")}</CardTitle>
+            <CardDescription>{t("signInDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <LoginForm />
           </CardContent>
         </Card>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          {t("noAccount")}{" "}
           <Link href="/register" className="font-medium text-foreground underline underline-offset-4">
-            Create one
+            {t("createOne")}
           </Link>
         </p>
       </div>

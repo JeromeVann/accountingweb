@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "sales": "Ventes",
+    "expenses": "Dépenses",
+    "payroll": "Paie",
+    "banking": "Banque",
+    "reports": "Rapports",
+    "settings": "Paramètres"
+  },
+  "navbar": {
+    "search": "Rechercher (Cmd+K)",
+    "new": "Nouveau",
+    "newInvoice": "Nouvelle facture",
+    "newBill": "Nouvelle dépense",
+    "signOut": "Se déconnecter"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bon retour, {name}."
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signInDesc": "Saisissez votre e-mail et votre mot de passe pour continuer.",
+    "noAccount": "Pas de compte ?",
+    "createOne": "Créer un compte",
+    "createAccount": "Créer un compte",
+    "createAccountDesc": "Votre entreprise sera créée avec un plan comptable par défaut.",
+    "haveAccount": "Déjà un compte ?",
+    "signInLink": "Se connecter"
+  }
+}

@@ -58,8 +58,16 @@ export async function POST(req: Request) {
     );
   }
 
-  const { contactId, issueDate, dueDate, memo, taxRate, lineItems } =
-    parsed.data;
+  const {
+    contactId,
+    issueDate,
+    dueDate,
+    memo,
+    taxRate,
+    pricesIncludeTax,
+    withholdingTaxRate,
+    lineItems,
+  } = parsed.data;
 
   const customer = await prisma.contact.findFirst({
     where: { id: contactId, companyId, type: "CUSTOMER" },
@@ -94,10 +102,28 @@ export async function POST(req: Request) {
     };
   });
 
-  const subtotal = sumMoney(lines.map((l) => l.total));
+  const gross = sumMoney(lines.map((l) => l.total));
   const taxRateDecimal = toMoneyDecimal(taxRate ?? 0);
-  const tax = subtotal.mul(taxRateDecimal).div(100).toDecimalPlaces(2);
-  const totalAmount = subtotal.plus(tax);
+
+  let subtotal: Prisma.Decimal;
+  let tax: Prisma.Decimal;
+  let totalAmount: Prisma.Decimal;
+
+  if (pricesIncludeTax && taxRateDecimal.greaterThan(0)) {
+    subtotal = gross.mul(100).div(new Prisma.Decimal(100).plus(taxRateDecimal)).toDecimalPlaces(2);
+    tax = gross.minus(subtotal).toDecimalPlaces(2);
+    totalAmount = gross;
+  } else {
+    subtotal = gross;
+    tax = gross.mul(taxRateDecimal).div(100).toDecimalPlaces(2);
+    totalAmount = subtotal.plus(tax);
+  }
+
+  const withholdingTaxRateDecimal = toMoneyDecimal(withholdingTaxRate ?? 0);
+  const withholdingTaxAmount = totalAmount
+    .mul(withholdingTaxRateDecimal)
+    .div(100)
+    .toDecimalPlaces(2);
 
   try {
     const invoice = await prisma.$transaction(async (tx) => {
@@ -114,6 +140,9 @@ export async function POST(req: Request) {
           subtotal,
           tax,
           totalAmount,
+          pricesIncludeTax: pricesIncludeTax ?? false,
+          withholdingTaxRate: withholdingTaxRateDecimal,
+          withholdingTaxAmount,
           memo: memo || null,
           lineItems: {
             create: lines.map((l) => ({
@@ -131,7 +160,8 @@ export async function POST(req: Request) {
         date: issueDateObj,
         reference: invoiceNumber,
         description: `Invoice ${invoiceNumber} — ${customer.displayName}`,
-        amount: totalAmount,
+        subtotal,
+        tax,
       });
 
       return tx.invoice.update({

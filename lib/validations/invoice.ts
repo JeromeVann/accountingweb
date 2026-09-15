@@ -13,6 +13,8 @@ export const invoiceCreateSchema = z.object({
   dueDate: z.string().min(1, "Due date is required"),
   memo: z.string().max(1000).optional(),
   taxRate: z.number().finite().min(0).max(100).optional(),
+  pricesIncludeTax: z.boolean().optional(),
+  withholdingTaxRate: z.number().finite().min(0).max(100).optional(),
   lineItems: z
     .array(invoiceLineItemSchema)
     .min(1, "At least one line item is required"),

@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ShareDialog } from "@/components/invoices/share-dialog";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,7 @@ const statusStyles: Record<InvoiceStatus, string> = {
 export default function InvoicesPage() {
   const [status, setStatus] = useState<string>("ALL");
   const [paying, setPaying] = useState<Invoice | null>(null);
+  const [sharing, setSharing] = useState<Invoice | null>(null);
   const [method, setMethod] = useState<string>("BANK_TRANSFER");
   const queryClient = useQueryClient();
   const { data: company } = useCompany();
@@ -178,19 +180,28 @@ export default function InvoicesPage() {
                       {formatCurrency(invoice.totalAmount, currency)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {(invoice.status === "SENT" ||
-                        invoice.status === "OVERDUE") && (
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setPaying(invoice);
-                            setMethod("BANK_TRANSFER");
-                          }}
+                          variant="ghost"
+                          onClick={() => setSharing(invoice)}
                         >
-                          Mark paid
+                          <Share2 className="h-4 w-4" />
                         </Button>
-                      )}
+                        {(invoice.status === "SENT" ||
+                          invoice.status === "OVERDUE") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setPaying(invoice);
+                              setMethod("BANK_TRANSFER");
+                            }}
+                          >
+                            Mark paid
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -238,6 +249,12 @@ export default function InvoicesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ShareDialog
+        invoice={sharing}
+        currency={currency}
+        onClose={() => setSharing(null)}
+      />
     </div>
   );
 }

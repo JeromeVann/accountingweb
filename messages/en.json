@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "sales": "Sales",
+    "expenses": "Expenses",
+    "payroll": "Payroll",
+    "banking": "Banking",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "navbar": {
+    "search": "Search (Cmd+K)",
+    "new": "New",
+    "newInvoice": "New Invoice",
+    "newBill": "New Bill",
+    "signOut": "Sign out"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {name}."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signInDesc": "Enter your email and password to continue.",
+    "noAccount": "Don't have an account?",
+    "createOne": "Create one",
+    "createAccount": "Create an account",
+    "createAccountDesc": "You and your company will be set up with a default chart of accounts.",
+    "haveAccount": "Already have an account?",
+    "signInLink": "Sign in"
+  }
+}

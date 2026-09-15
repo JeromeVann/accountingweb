@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +23,7 @@ interface NavBarProps {
 
 export function NavBar({ user }: NavBarProps) {
   const router = useRouter();
+  const t = useTranslations("navbar");
 
   const initials = (user.name ?? "?")
     .split(" ")
@@ -33,23 +36,25 @@ export function NavBar({ user }: NavBarProps) {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white px-6">
       <div className="relative w-full max-w-md">
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search (Cmd+K)" className="pl-8" />
+        <Input placeholder={t("search")} className="pl-8" />
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <LanguageSwitcher />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
               <Plus className="mr-1 h-4 w-4" />
-              New
+              {t("new")}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => router.push("/invoices/new")}>
-              New Invoice
+              {t("newInvoice")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/bills/new")}>
-              New Bill
+              {t("newBill")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -72,7 +77,7 @@ export function NavBar({ user }: NavBarProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-              Sign out
+              {t("signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

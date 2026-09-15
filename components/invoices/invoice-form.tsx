@@ -68,6 +68,8 @@ export function InvoiceForm() {
       issueDate: new Date().toISOString().slice(0, 10),
       dueDate: new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10),
       taxRate: 0,
+      pricesIncludeTax: false,
+      withholdingTaxRate: 0,
       memo: "",
       lineItems: [{ description: "", quantity: 1, unitPrice: 0 }],
     },
@@ -80,12 +82,22 @@ export function InvoiceForm() {
 
   const watchedLineItems = form.watch("lineItems");
   const taxRate = Number(form.watch("taxRate") ?? 0);
-  const subtotal = watchedLineItems.reduce(
+  const pricesIncludeTax = form.watch("pricesIncludeTax") ?? false;
+  const withholdingTaxRate = Number(form.watch("withholdingTaxRate") ?? 0);
+
+  const gross = watchedLineItems.reduce(
     (sum, li) => sum + Number(li.quantity || 0) * Number(li.unitPrice || 0),
     0,
   );
-  const tax = (subtotal * taxRate) / 100;
+
+  const subtotal =
+    pricesIncludeTax && taxRate > 0
+      ? (gross * 100) / (100 + taxRate)
+      : gross;
+  const tax = pricesIncludeTax && taxRate > 0 ? gross - subtotal : (gross * taxRate) / 100;
   const total = subtotal + tax;
+  const withholdingTax = (total * withholdingTaxRate) / 100;
+  const amountDue = total - withholdingTax;
 
   async function addCustomer() {
     setSavingCustomer(true);
@@ -309,8 +321,29 @@ export function InvoiceForm() {
                 className="max-w-[160px]"
                 {...form.register("taxRate", { valueAsNumber: true })}
               />
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-border"
+                  {...form.register("pricesIncludeTax")}
+                />
+                Prices include tax
+              </label>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="withholdingTaxRate">Withholding tax rate (%)</Label>
+              <Input
+                id="withholdingTaxRate"
+                type="number"
+                step="0.01"
+                className="max-w-[160px]"
+                {...form.register("withholdingTaxRate", { valueAsNumber: true })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Deducted by your customer at payment (e.g. 5% WHT).
+              </p>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="memo">Memo</Label>
               <Textarea id="memo" placeholder="Optional notes" {...form.register("memo")} />
             </div>
@@ -325,10 +358,26 @@ export function InvoiceForm() {
               <span className="text-muted-foreground">Tax</span>
               <span className="tabular-nums">{formatCurrency(tax, currency)}</span>
             </div>
+            {withholdingTax > 0 && (
+              <div className="flex w-60 justify-between">
+                <span className="text-muted-foreground">Withholding tax</span>
+                <span className="tabular-nums text-rose-600">
+                  −{formatCurrency(withholdingTax, currency)}
+                </span>
+              </div>
+            )}
             <div className="flex w-60 justify-between border-t pt-1 text-base font-semibold">
               <span>Total</span>
               <span className="tabular-nums">{formatCurrency(total, currency)}</span>
             </div>
+            {withholdingTax > 0 && (
+              <div className="flex w-60 justify-between">
+                <span className="text-muted-foreground">Amount due</span>
+                <span className="tabular-nums font-medium">
+                  {formatCurrency(amountDue, currency)}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3">

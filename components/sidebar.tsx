@@ -2,27 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   BarChart3,
   Landmark,
   LayoutDashboard,
   Receipt,
   Settings,
+  Users,
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/invoices", label: "Sales", icon: Receipt },
-  { href: "/bills", label: "Expenses", icon: Wallet },
-  { href: "/banking", label: "Banking", icon: Landmark },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "dashboard", icon: LayoutDashboard },
+  { href: "/invoices", label: "sales", icon: Receipt },
+  { href: "/bills", label: "expenses", icon: Wallet },
+  { href: "/payroll", label: "payroll", icon: Users },
+  { href: "/banking", label: "banking", icon: Landmark },
+  { href: "/reports", label: "reports", icon: BarChart3 },
+  { href: "/settings", label: "settings", icon: Settings },
 ];
 
 export function Sidebar({ companyName }: { companyName: string }) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <aside className="sticky top-0 h-screen w-60 shrink-0 bg-[#0F172A] text-slate-300 flex flex-col">
@@ -49,7 +53,7 @@ export function Sidebar({ companyName }: { companyName: string }) {
               )}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.label)}
             </Link>
           );
         })}
